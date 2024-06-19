@@ -1,6 +1,13 @@
 # s3 viewer go
 > A CLI tool that helps you view public files in s3 bucket 
 
+
+----
+ go test -v ./...
+
+----
+
+
 ## Feature
 - can export file_list to `.csv`
 - can preview files without messing up your local file system

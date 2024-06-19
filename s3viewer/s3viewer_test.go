@@ -1,4 +1,4 @@
-package main
+package s3viewer
 
 import (
 	"encoding/xml"
