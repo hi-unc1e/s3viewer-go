@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
@@ -8,6 +9,7 @@ import (
 	"regexp"
 )
 
+// 定义结构体以匹配 XML 内容
 type ListBucketResult struct {
 	XMLName     xml.Name `xml:"ListBucketResult"`
 	Name        string   `xml:"Name"`
@@ -21,49 +23,60 @@ type ListBucketResult struct {
 type File struct {
 	Key          string `xml:"Key"`
 	LastModified string `xml:"LastModified"`
-	_            string `xml:"ETag"`
 	Size         int    `xml:"Size"`
-	_            Owner  `xml:"Owner"`
-	_            string `xml:"StorageClass"`
 }
 
-type Owner struct {
-	DisplayName string `xml:"DisplayName"`
-	ID          string `xml:"ID"`
-}
-
-func find_s3_xml_string(xml_content string) ([]byte, error) {
-	// 定义正则表达式来匹配 <ListBucketResult> 标签及其内容
+// 查找并提取 <ListBucketResult> 标签及其内容
+func findS3XMLString(xmlContent string) ([]byte, error) {
 	re := regexp.MustCompile(`(?s)<ListBucketResult.*?</ListBucketResult>`)
-
-	// 查找匹配的内容
-	matches := re.FindAllString(xml_content, -1)
+	matches := re.FindAllString(xmlContent, -1)
 
 	if len(matches) == 0 {
-		match := ""
-		return []byte(match), fmt.Errorf("No matches found")
-	} else {
-		fmt.Println(matches)
-		match := matches[0]
-		return []byte(match), nil
+		return nil, fmt.Errorf("no matches found")
 	}
 
+	return []byte(matches[0]), nil
+}
+
+// 预处理 XML 内容，替换无效字符实体
+func sanitizeXMLContent(xmlContent []byte) []byte {
+	re := regexp.MustCompile(`&[^;]+`)
+	return re.ReplaceAllFunc(xmlContent, func(b []byte) []byte {
+		if bytes.HasPrefix(b, []byte("&")) && !bytes.Contains(b, []byte(";")) {
+			return bytes.Replace(b, []byte("&"), []byte("&amp;"), 1)
+		}
+		return b
+	})
+}
+
+// 解析 XML 内容为 ListBucketResult 结构体
+func parseXMLToListBucketResult(xmlContent []byte) (*ListBucketResult, error) {
+	var result ListBucketResult
+	err := xml.Unmarshal(xmlContent, &result)
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
 }
 
 func main() {
 	// 读取 XML 文件内容
-	file_text, err := ioutil.ReadFile("/Users/dpdu/Desktop/opt/s3view_dev/s3viewer-go/test/h2-html.xml")
+	fileText, err := ioutil.ReadFile("/Users/dpdu/Desktop/opt/s3view_dev/s3viewer-go/test/h2-html.xml")
 	if err != nil {
 		log.Fatalf("Failed to read XML file: %v", err)
 	}
-	xmlContent, err := find_s3_xml_string(string(file_text))
+
+	// 提取 <ListBucketResult> 标签及其内容
+	xmlContent, err := findS3XMLString(string(fileText))
 	if err != nil {
-		log.Fatalf("Failed to parse XML file: %v", err)
+		log.Fatalf("Failed to find S3 XML string: %v", err)
 	}
 
+	// 预处理 XML 内容
+	xmlContent = sanitizeXMLContent(xmlContent)
+
 	// 解析 XML 内容为对象
-	var result ListBucketResult
-	err = xml.Unmarshal(xmlContent, &result)
+	result, err := parseXMLToListBucketResult(xmlContent)
 	if err != nil {
 		log.Fatalf("Failed to unmarshal XML: %v", err)
 	}
@@ -72,5 +85,4 @@ func main() {
 	for _, file := range result.Files {
 		fmt.Printf("%v\n", file)
 	}
-
 }
