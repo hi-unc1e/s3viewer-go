@@ -2,10 +2,13 @@ package s3viewer
 
 import (
 	"bytes"
+	"encoding/csv"
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/http"
+	"os"
 	"regexp"
 )
 
@@ -24,6 +27,41 @@ type File struct {
 	Key          string `xml:"Key"`
 	LastModified string `xml:"LastModified"`
 	Size         int    `xml:"Size"`
+}
+
+func LoadRemoteHTTP(url string) (*ListBucketResult, error) {
+	// 获取远程 URL 的内容
+	response, err := http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to fetch remote URL: %w", err)
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("Failed to fetch remote URL: %s", response.Status)
+	}
+
+	// 读取响应体
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to read response body: %w", err)
+	}
+
+	// 提取 <ListBucketResult> 标签及其内容
+	// 假设 findS3XMLString 和 sanitizeXMLContent 函数已经更新为处理字符串输入
+	xmlContent, err := FindS3XMLString(string(body))
+	if err != nil {
+		return nil, fmt.Errorf("Failed to find S3 XML string: %w", err)
+	}
+
+	xmlContent = SanitizeXMLContent(xmlContent)
+
+	// 解析 XML 内容为对象
+	result, err := ParseXMLToListBucketResult(xmlContent)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to unmarshal XML: %w", err)
+	}
+	return result, err
 }
 
 func LoadFile(path string) {
@@ -53,6 +91,41 @@ func LoadFile(path string) {
 	for _, file := range result.Files {
 		fmt.Printf("%v\n", file)
 	}
+}
+
+// resultToCSVFile 将 ListBucketResult 对象转换为 CSV 格式，并保存到指定的文件中
+func resultToCSVFile(result *ListBucketResult, filePath string) error {
+	// 创建输出文件
+	file, err := os.Create(filePath)
+	if err != nil {
+		return fmt.Errorf("Failed to create output file: %w", err)
+	}
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+
+		}
+	}(file)
+
+	// 创建 CSV 写入器
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+
+	// 写入 CSV 头部
+	headers := []string{"Key", "Size", "LastModified"}
+	if err := writer.Write(headers); err != nil {
+		return fmt.Errorf("Failed to write CSV headers: %w", err)
+	}
+
+	// 写入文件条目
+	for _, entry := range result.Files {
+		record := []string{entry.Key, fmt.Sprintf("%d", entry.Size), entry.LastModified}
+		if err := writer.Write(record); err != nil {
+			return fmt.Errorf("Failed to write CSV record: %w", err)
+		}
+	}
+
+	return nil
 }
 
 // 查找并提取 <ListBucketResult> 标签及其内容

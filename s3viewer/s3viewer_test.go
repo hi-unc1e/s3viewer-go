@@ -2,6 +2,7 @@ package s3viewer
 
 import (
 	"encoding/xml"
+	"os"
 	"testing"
 )
 
@@ -25,7 +26,7 @@ const sampleXML = `
     </Contents>
 </ListBucketResult>`
 
-const invalidXML = `
+const specialXML = `
 <ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
     <Name>example-bucket</Name>
     <Prefix/>
@@ -74,7 +75,7 @@ func TestFindS3XMLString(t *testing.T) {
 }
 
 func TestSanitizeXMLContent(t *testing.T) {
-	xmlContent := SanitizeXMLContent([]byte(invalidXML))
+	xmlContent := SanitizeXMLContent([]byte(specialXML))
 
 	var result ListBucketResult
 	err := xml.Unmarshal(xmlContent, &result)
@@ -106,4 +107,30 @@ func TestParseXMLToListBucketResult(t *testing.T) {
 	if result.Files[0].Key != "test-file1.txt" {
 		t.Errorf("Expected file key 'test-file1.txt', got '%s'", result.Files[0].Key)
 	}
+}
+
+func TestSaveToCsv(t *testing.T) {
+	xmlContent := SanitizeXMLContent([]byte(sampleXML))
+
+	result, err := ParseXMLToListBucketResult(xmlContent)
+	if err != nil {
+		t.Fatalf("Failed to parse XML to ListBucketResult: %v", err)
+	}
+	tmp_file := "test.csv"
+	resultToCSVFile(result, tmp_file)
+	textB, err := os.ReadFile(tmp_file)
+	t.Log(string(textB))
+}
+
+func TestSaveToCsvSpecial(t *testing.T) {
+	xmlContent := SanitizeXMLContent([]byte(specialXML))
+
+	result, err := ParseXMLToListBucketResult(xmlContent)
+	if err != nil {
+		t.Fatalf("Failed to parse XML to ListBucketResult: %v", err)
+	}
+	tmp_file := "test.csv"
+	resultToCSVFile(result, tmp_file)
+	textB, err := os.ReadFile(tmp_file)
+	t.Log(string(textB))
 }
