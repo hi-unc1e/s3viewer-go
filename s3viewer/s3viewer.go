@@ -360,3 +360,18 @@ func ParseXMLToListBucketResult(xmlContent []byte) (*ListBucketResult, error) {
 	}
 	return &result, nil
 }
+
+// Merge 方法用于合并两个 ListBucketResult 结构体的结果
+func (rOld *ListBucketResult) MergeUrl(rNew *ListBucketResult) *ListBucketResult {
+	newResult := new(ListBucketResult)
+	// 合并 url
+	if rOld.Url != "" {
+		newResult = rNew
+		newResult.Url = rOld.Url
+	} else if rNew.Url != "" {
+		newResult = rOld
+		newResult.Url = rNew.Url
+	}
+
+	return newResult
+}

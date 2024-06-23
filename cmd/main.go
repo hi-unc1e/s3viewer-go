@@ -30,21 +30,23 @@ func main() {
 
 	// 从远程 URL 加载内容
 	var result = new(s3viewer.ListBucketResult)
-	var err error = nil
 
 	// 初始化 URL
 	result.Url = *url
 
 	if isRecursively {
-		result, err = s3viewer.LoadRemoteHTTPRecursive(*url, *maxPage)
+		resultNew, err := s3viewer.LoadRemoteHTTPRecursive(*url, *maxPage)
+
 		if err != nil {
 			log.Fatalf("Failed to load remote URL: %v", err)
 		}
+		result = resultNew.MergeUrl(result)
 	} else {
-		result, err = s3viewer.LoadRemoteHTTP(*url)
+		resultNew, err := s3viewer.LoadRemoteHTTP(*url)
 		if err != nil {
 			log.Fatalf("Failed to load remote URL: %v", err)
 		}
+		result = resultNew.MergeUrl(result)
 	}
 
 	if isUseFileOutput {
