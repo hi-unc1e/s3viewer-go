@@ -223,8 +223,8 @@ func TestLoadRemoteHTTP(t *testing.T) {
 }
 
 // 翻页
-func TestLoadRemoteHTTPRecursive(t *testing.T) {
-	result, err := LoadRemoteHTTPRecursive("https://116.178.4.134:9000/", 30)
+func TestLoadRemoteHTTPRecursive_v1(t *testing.T) {
+	result, err := LoadRemoteHTTPRecursive("https://116.178.4.134:9000/", 3)
 	if err != nil {
 		t.Fatalf("Failed to load remote HTTP: %v", err)
 	}
@@ -244,4 +244,75 @@ func TestLoadRemoteHTTPRecursive(t *testing.T) {
 	// 断言 CSV 文件内容是否符合预期
 	expectedCSV := "Key"
 	assert.Contains(t, content, expectedCSV, "CSV content does not match expected")
+}
+
+func TestLoadRemoteHTTPRecursive_v1_No_NextMarker(t *testing.T) {
+	result, err := LoadRemoteHTTPRecursive("https://gwcache.acer.com.cn/", 3)
+	if err != nil {
+		t.Fatalf("Failed to load remote HTTP: %v", err)
+	}
+
+	fmt.Println(result)
+	rlen := len(result.Files)
+	if rlen < 1000 {
+		log.Fatalf("翻页有问题！%+v", rlen)
+	}
+
+	content, err := SaveResultToTempCSV(t, result)
+	assert.NoError(t, err, "Failed to save result to temporary CSV")
+
+	// 断言文件内容不为空
+	assert.NotEmpty(t, content, "CSV content is empty")
+
+	// 断言 CSV 文件内容是否符合预期
+	expectedCSV := "Key"
+	assert.Contains(t, content, expectedCSV, "CSV content does not match expected")
+}
+
+func TestLoadRemoteHTTPRecursive_v2(t *testing.T) {
+	result, err := LoadRemoteHTTPRecursive("https://61.174.60.37/", 2)
+	if err != nil {
+		t.Fatalf("Failed to load remote HTTP: %v", err)
+	}
+
+	fmt.Println(result)
+	rlen := len(result.Files)
+	if rlen < 1000 {
+		log.Fatalf("翻页有问题！%+v", rlen)
+	}
+
+	content, err := SaveResultToTempCSV(t, result)
+	assert.NoError(t, err, "Failed to save result to temporary CSV")
+
+	// 断言文件内容不为空
+	assert.NotEmpty(t, content, "CSV content is empty")
+
+	// 断言 CSV 文件内容是否符合预期
+	expectedCSV := "Key"
+	assert.Contains(t, content, expectedCSV, "CSV content does not match expected")
+}
+
+func TestLoadRemoteHTTPRecursive_CanDeal_CDNIgnoreParameters(t *testing.T) {
+	// 测试能处理CDN 忽略参数的场景（也就是无法翻页的情况），这种时候，不理他们
+
+	result, err := LoadRemoteHTTPRecursive("https://dl.qianxin.com/", 3)
+	if err != nil {
+		t.Fatalf("Failed to load remote HTTP: %v", err)
+	}
+
+	rlen := len(result.Files)
+	if rlen != 2000 { // 只有 2 页才对！
+		log.Fatalf("翻页有问题！没兼容这种 CDN 的场景 %+v", rlen)
+	}
+
+	content, err := SaveResultToTempCSV(t, result)
+	assert.NoError(t, err, "Failed to save result to temporary CSV")
+
+	// 断言文件内容不为空
+	assert.NotEmpty(t, content, "CSV content is empty")
+
+	// 断言 CSV 文件内容是否符合预期
+	expectedCSV := "Key"
+	assert.Contains(t, content, expectedCSV, "CSV content does not match expected")
+
 }

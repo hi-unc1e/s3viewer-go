@@ -86,10 +86,11 @@ func tryGetNextPageURL(currentUrl string, result ListBucketResult) (string, erro
 	var nextUrl = currentUrl
 	var err error = nil
 	// 创建一个新的 URL 查询参数结构体
+	var u *url.URL
 	query := url.Values{}
 
-	u, error := url.Parse(currentUrl)
-	if error != nil {
+	u, err = url.Parse(currentUrl)
+	if err != nil {
 		return currentUrl, fmt.Errorf("invalid URL: %w", err)
 	}
 
@@ -104,6 +105,8 @@ func tryGetNextPageURL(currentUrl string, result ListBucketResult) (string, erro
 		u.RawQuery = query.Encode()
 		nextUrl = u.String()
 
+		log.Printf("尝试请求下一页: %v", nextUrl)
+		return nextUrl, err
 	}
 
 	// try v1
@@ -126,6 +129,10 @@ func tryGetNextPageURL(currentUrl string, result ListBucketResult) (string, erro
 	// 更新 URL 的查询参数
 	u.RawQuery = query.Encode()
 	nextUrl = u.String()
+
+	if currentUrl == nextUrl {
+		err = fmt.Errorf("[!]两次 URL完全相同，可能是目标部署了「忽略参数的CDN」，这种情况无法翻页")
+	}
 
 	log.Printf("尝试请求下一页: %v", nextUrl)
 	return nextUrl, err
