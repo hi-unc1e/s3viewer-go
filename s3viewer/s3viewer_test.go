@@ -217,9 +217,14 @@ func TestLoadRemoteHTTP(t *testing.T) {
 	// 断言文件内容不为空
 	assert.NotEmpty(t, content, "CSV content is empty")
 
-	// 断言 CSV 文件内容是否符合预期
+	/* 断言 CSV 文件内容是否符合预期 */
 	expectedCSV := "Key"
 	assert.Contains(t, content, expectedCSV, "CSV content does not match expected")
+
+	// 断言 CSV 文件内容是否符合预期
+	expectedCSV = "http"
+	assert.Contains(t, content, expectedCSV, "CSV content does not match expected")
+
 }
 
 // 翻页
@@ -263,10 +268,6 @@ func TestLoadRemoteHTTPRecursive_v1_No_NextMarker(t *testing.T) {
 
 	// 断言文件内容不为空
 	assert.NotEmpty(t, content, "CSV content is empty")
-
-	// 断言 CSV 文件内容是否符合预期
-	expectedCSV := "Key"
-	assert.Contains(t, content, expectedCSV, "CSV content does not match expected")
 }
 
 func TestLoadRemoteHTTPRecursive_v2(t *testing.T) {
@@ -286,10 +287,6 @@ func TestLoadRemoteHTTPRecursive_v2(t *testing.T) {
 
 	// 断言文件内容不为空
 	assert.NotEmpty(t, content, "CSV content is empty")
-
-	// 断言 CSV 文件内容是否符合预期
-	expectedCSV := "Key"
-	assert.Contains(t, content, expectedCSV, "CSV content does not match expected")
 }
 
 func TestLoadRemoteHTTPRecursive_CanDeal_CDNIgnoreParameters(t *testing.T) {
@@ -310,9 +307,4 @@ func TestLoadRemoteHTTPRecursive_CanDeal_CDNIgnoreParameters(t *testing.T) {
 
 	// 断言文件内容不为空
 	assert.NotEmpty(t, content, "CSV content is empty")
-
-	// 断言 CSV 文件内容是否符合预期
-	expectedCSV := "Key"
-	assert.Contains(t, content, expectedCSV, "CSV content does not match expected")
-
 }

@@ -308,14 +308,18 @@ func SaveResultToCSVFile(result *ListBucketResult, filePath string) error {
 	defer writer.Flush()
 
 	// 写入 CSV 头部
-	headers := []string{"Key", "Size", "LastModified"}
+	headers := []string{"Key", "Size", "LastModified", "Link"}
 	if err := writer.Write(headers); err != nil {
 		return fmt.Errorf("Failed to write CSV headers: %w", err)
 	}
 
 	// 写入文件条目
 	for _, entry := range result.Files {
-		record := []string{entry.Key, fmt.Sprintf("%d", entry.Size), entry.LastModified}
+		currentFileLink, err := url.JoinPath(result.Url, entry.Key)
+		if err != nil {
+			return fmt.Errorf("Failed to join URL: %w", err)
+		}
+		record := []string{entry.Key, fmt.Sprintf("%d", entry.Size), entry.LastModified, currentFileLink}
 		if err := writer.Write(record); err != nil {
 			return fmt.Errorf("Failed to write CSV record: %w", err)
 		}
