@@ -10,6 +10,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"regexp"
 	"text/tabwriter"
@@ -18,13 +19,20 @@ import (
 
 // 定义结构体以匹配 XML 内容
 type ListBucketResult struct {
-	XMLName     xml.Name `xml:"ListBucketResult"`
-	Name        string   `xml:"Name"`
-	Prefix      string   `xml:"Prefix"`
-	Marker      string   `xml:"Marker"`
-	MaxKeys     int      `xml:"MaxKeys"`
-	IsTruncated bool     `xml:"IsTruncated"`
-	Files       []File   `xml:"Contents"`
+	Url         string
+	Prefix      string `xml:"Prefix"`
+	NextMarker  string `xml:"NextMarker"` // v1_翻页用
+	Marker      string `xml:"Marker"`     // v1_翻页用（备选）
+	KeyCount    int    `xml:"KeyCount"`   // 当前数量
+	MaxKeys     int    `xml:"MaxKeys"`
+	IsTruncated bool   `xml:"IsTruncated"`
+	/* IsTruncated
+	请求中返回的结果是否被截断。
+	- true表示本次没有返回全部结果。
+	- false表示本次已经返回了全部结果。
+	*/
+	NextContinuationToken string `xml:"NextContinuationToken"` //翻页用
+	Files                 []File `xml:"Contents"`
 }
 
 type File struct {
@@ -34,12 +42,12 @@ type File struct {
 }
 
 func HttpGet(url string) (resp *http.Response, err error) {
-	// 创建一个自定义的HTTP客户端(30秒超时，忽略 TLS 证书我嗯题)
+	// 创建一个自定义的HTTP客户端(30秒超时，忽略 TLS 证书问题)
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // 忽略SSL证书验证
 		DialContext: (&net.Dialer{
-			Timeout:   30 * time.Second, // 设置建立连接的超时时间
-			KeepAlive: 30 * time.Second,
+			Timeout:   10 * time.Second, // 设置建立连接的超时时间
+			KeepAlive: 10 * time.Second,
 		}).DialContext,
 	}
 
@@ -48,6 +56,7 @@ func HttpGet(url string) (resp *http.Response, err error) {
 		Timeout:   10 * time.Second, // 设置请求的总超时时间
 	}
 	// 使用自定义的客户端发起GET请求
+	log.Printf("Http Get [%v]\n", url)
 	response, err := client.Get(url)
 	if err != nil {
 		fmt.Println("Error fetching URL:", err)
@@ -57,8 +66,133 @@ func HttpGet(url string) (resp *http.Response, err error) {
 	}
 }
 
+func tryGetNextPageURL(currentUrl string, result ListBucketResult) (string, error) {
+	/*
+		* 方法1
+			GET /?marker=?
+			拿到第一页的XML中的NextMarker*，构造 URL，继续请求下一页，这样周而复始。
+			注：*， 这个 NextMarker* 可能来自NextMarker字段，也可能是最后一个元素的 key
+			参考资料：
+			- https://help.aliyun.com/zh/oss/developer-reference/listobjects#:~:text=%E5%BC%80%E5%A7%8B%E8%BF%94%E5%9B%9EObject%E3%80%82-,marker%E7%94%A8%E6%9D%A5%E5%AE%9E%E7%8E%B0%E5%88%86%E9%A1%B5,-%E6%98%BE%E7%A4%BA%E6%95%88%E6%9E%9C%EF%BC%8C%E5%8F%82%E6%95%B0
+			- 设定从marker之后按字母排序开始返回Object。marker用来实现分页显示效果，参数的长度必须小于1024字节。做条件查询时，即使marker在列表中不存在，也会从符合marker字母排序的下一个开始打印。
+
+		* 方法2
+			GET /?list-type=2&continuation-token=?
+			拿到XML 中NextContinuationToken的值，构造 URL，继续请求下一页，这样周而复始。
+			参考资料：
+			- https://help.aliyun.com/zh/oss/developer-reference/listobjectsv2#:~:text=%E9%BB%98%E8%AE%A4%E5%80%BC%EF%BC%9A%E6%97%A0-,continuation%2Dtoken,-%E5%AD%97%E7%AC%A6%E4%B8%B2
+			- 指定List操作需要从此token开始。您可从ListObjectsV2（GetBucketV2）结果中的NextContinuationToken获取此token。
+	*/
+	var nextUrl = currentUrl
+	var err error = nil
+	// 创建一个新的 URL 查询参数结构体
+	query := url.Values{}
+
+	u, error := url.Parse(currentUrl)
+	if error != nil {
+		return currentUrl, fmt.Errorf("invalid URL: %w", err)
+	}
+
+	//fmt.Printf("result-> %+v \n", result)
+	// try v2
+	if result.NextContinuationToken != "" {
+		// 	("/?list-type=2&continuation-token=%s", result.NextContinuationToken)
+
+		query.Set("list-type", "2")
+		query.Set("continuation-token", result.NextContinuationToken)
+		// 更新 URL 的查询参数
+		u.RawQuery = query.Encode()
+		nextUrl = u.String()
+
+	}
+
+	// try v1
+	// 	("/?marker=%s", NextMarker)
+	if result.NextMarker != "" {
+		NextMarker := result.Files[len(result.Files)-1].Key
+		query.Set("marker", NextMarker)
+		nextUrl = u.String()
+	} else {
+		// try last one, or die
+		lastItemMarker := result.Files[len(result.Files)-1].Key
+		if lastItemMarker != "" {
+			query.Set("marker", lastItemMarker)
+			nextUrl = u.String()
+		} else {
+			err = fmt.Errorf("[!]无法翻页，应该是不支持翻页")
+		}
+	}
+
+	// 更新 URL 的查询参数
+	u.RawQuery = query.Encode()
+	nextUrl = u.String()
+
+	log.Printf("尝试请求下一页: %v", nextUrl)
+	return nextUrl, err
+}
+
+func LoadRemoteHTTPRecursive(url string, maxPage int) (*ListBucketResult, error) {
+	// e.g.: http://s3.example.com/
+	// 如果不支持翻页，就打印warning，退化到LoadRemoteHTTP
+	if maxPage <= 0 {
+		maxPage = 1
+	}
+	var acutalPage int
+
+	var allResults ListBucketResult
+
+	for page := 0; page < maxPage; page++ {
+		acutalPage = page + 1
+		response, err := HttpGet(url)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to fetch remote URL: %w", err)
+		}
+		defer response.Body.Close()
+
+		if response.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("Failed to fetch remote URL: %s", response.Status)
+		}
+
+		body, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to read response body: %w", err)
+		}
+
+		xmlContent, err := FindS3XMLString(string(body))
+		if err != nil {
+			return nil, fmt.Errorf("Failed to find S3 XML string: %w", err)
+		}
+
+		xmlContent = SanitizeXMLContent(xmlContent)
+
+		result, err := ParseXMLToListBucketResult(xmlContent)
+		log.Printf("第 %v 页结果条数: %v", acutalPage, len(result.Files))
+
+		if err != nil {
+			return nil, fmt.Errorf("Failed to unmarshal XML: %w", err)
+		}
+
+		allResults.Files = append(allResults.Files, result.Files...)
+
+		// 判断是否有必要翻页
+		if !result.IsTruncated {
+			log.Printf("不必翻页，本页已经返回了全部结果（%v）", len(result.Files))
+			break
+		}
+
+		url, err = tryGetNextPageURL(url, *result)
+		if err != nil {
+			log.Printf("翻页失败，错误: %v", err)
+			break
+		}
+	}
+	log.Printf("[+]结果总条数: [%v], 已拉取页数: [%v]", len(allResults.Files), acutalPage)
+	return &allResults, nil
+}
+
 func LoadRemoteHTTP(url string) (*ListBucketResult, error) {
 	// 获取远程 URL 的内容
+	// e.g.: http://s3.example.com
 	response, err := HttpGet(url)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to fetch remote URL: %w", err)
