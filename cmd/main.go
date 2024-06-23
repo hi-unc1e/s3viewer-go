@@ -12,22 +12,36 @@ func main() {
 	// 定义命令行参数
 	url := flag.String("u", "http://", "s3 URL, such as http://bucket.s3.amazonaws.com/")
 	output := flag.String("o", "", "output file name")
+	maxPage := flag.Int("p", 1, "max page")
 	flag.Parse()
+	// 2nd param
 	isUseFileOutput := *output != ""
+	isRecursively := *maxPage > 0
 
 	// 检查是否提供了所有必需的参数
 	if len(os.Args) < 2 {
-		fmt.Println("Usage: s3viewer [-u s3_url] [-o output_file]")
+		fmt.Println("Usage: s3viewer -u s3_url [-o output_file] [-p max_page]")
 		return
 	}
 
 	if *url == "" {
 		log.Fatalf("s3 URL is required")
 	}
+
 	// 从远程 URL 加载内容
-	result, err := s3viewer.LoadRemoteHTTP(*url)
-	if err != nil {
-		log.Fatalf("Failed to load remote URL: %v", err)
+	var result *s3viewer.ListBucketResult
+	var err error = nil
+
+	if isRecursively {
+		result, err = s3viewer.LoadRemoteHTTPRecursive(*url, *maxPage)
+		if err != nil {
+			log.Fatalf("Failed to load remote URL: %v", err)
+		}
+	} else {
+		result, err = s3viewer.LoadRemoteHTTP(*url)
+		if err != nil {
+			log.Fatalf("Failed to load remote URL: %v", err)
+		}
 	}
 
 	if isUseFileOutput {
@@ -42,5 +56,4 @@ func main() {
 			log.Fatalf("Failed to print result: %v", err)
 		}
 	}
-
 }
