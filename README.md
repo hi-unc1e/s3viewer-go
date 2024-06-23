@@ -41,14 +41,20 @@ Usage of ./s3viewer:
     $ ./s3v -u https://dl.qianxin.com/ -o qianxin.csv
     2024/06/23 11:41:01 Saved into `qianxin.csv`
     ```
-- [ ] 不指定`-o`参数时，将会打印出列表，例如
-    ```bash
-    $ ./s3v -u https://dl.qianxin.com/
-    TODO
-    ```
-- [ ] 自动翻页
-- [ ] 自动拼接链接～
-- [ ] 支持预览？（架构得考虑考虑）
+- [x] 不指定`-o`参数时，将会打印出列表，例如下面的命令将会输出
+  ```bash
+    $  ./s3v -u http://downbs.wan896.com/
+  ```
+  
+  | Key                                                         | Size      | LastModifiedDate         |
+  | ----------------------------------------------------------- | --------- | ------------------------ |
+  | 20240112144418.png                                          | 347934    | 2024-01-17T09:25:17.000Z |
+  | package/android/pzjhcs/35a336f13be958cdc7fefa31a6e953d5.apk | 463869061 | 2024-04-08T06:16:28.000Z |
+
+
+- [ ] 自动翻页，查询文件总数
+- [ ] 下载链接，自动拼接链接～
+- [ ] 支持预览？（架构得考虑考虑，oneNote）
 
 ```html
 fofa dork: https://fofa.info/result?qbase64=IjxMaXN0QnVja2V0UmVzdWx0IHhtbG5zPVwiaHR0cDovL3MzLmFtYXpvbmF3cy5jb20vZG9jLzIwMDYtMDMtMDEvXCI%2BIiAmJiBjb3VudHJ5PSJDTiIgJiYgaWNvbl9oYXNoPSIyMTAwMDcyMDYyIg%3D%3D
