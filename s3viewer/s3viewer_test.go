@@ -205,6 +205,16 @@ func TestSaveToCsvSpecial(t *testing.T) {
 	assert.Contains(t, content, expectedCSV, "CSV content does not match expected")
 }
 
+func TestPrintResult(t *testing.T) {
+	if result, err := LoadFile("../test/h2-html.xml"); err != nil {
+		log.Fatalf("Failed to load file: %v", err)
+	} else {
+		if err := PrintResult(result); err != nil {
+			t.Fatalf("Failed to print result: %v", err)
+		}
+	}
+}
+
 func TestLoadRemoteHTTP(t *testing.T) {
 	result, err := LoadRemoteHTTP("https://dl.qianxin.com/")
 	if err != nil {
