@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
@@ -10,7 +11,14 @@ import (
 	"testing"
 )
 
+func resetFlags() {
+	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
+}
+
 func TestMainFunc(t *testing.T) {
+	// 重置 flag
+	resetFlags()
+
 	// 创建临时目录
 	tmpDir, err := ioutil.TempDir("", "s3viewer_cli_test")
 	if err != nil {
@@ -37,6 +45,9 @@ func TestMainFunc(t *testing.T) {
 }
 
 func TestMissingOutput(t *testing.T) {
+	// 重置 flag
+	resetFlags()
+
 	outputFile := "file_list.csv"
 	// 设置命令行参数
 	os.Args = []string{"cmd", "-u", "https://dl.qianxin.com/"}
