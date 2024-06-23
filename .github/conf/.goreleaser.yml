@@ -31,3 +31,4 @@ changelog:
     exclude:
       - '^chore'
       - '^tests'
+      - '^ci'
