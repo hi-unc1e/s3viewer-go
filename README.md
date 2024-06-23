@@ -16,6 +16,9 @@
 - can export file_list to `.csv`
 - can preview files without messing up your local file system
 
+- 可以将`file_list`导出为`.csv`
+- 可以预览文件，而不会搞乱你的本地文件系统
+
 
 ## Usage
 ### Install（安装）
@@ -38,11 +41,12 @@ Usage of ./s3viewer:
     $ ./s3v -u https://dl.qianxin.com/ -o qianxin.csv
     2024/06/23 11:41:01 Saved into `qianxin.csv`
     ```
-
 - [ ] 不指定`-o`参数时，将会打印出列表，例如
     ```bash
     $ ./s3v -u https://dl.qianxin.com/
+    TODO
     ```
+- [ ] 自动翻页
 
 
 ## Changelog
