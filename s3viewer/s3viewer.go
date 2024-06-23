@@ -2,15 +2,18 @@ package s3viewer
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/csv"
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"regexp"
 	"text/tabwriter"
+	"time"
 )
 
 // 定义结构体以匹配 XML 内容
@@ -30,9 +33,33 @@ type File struct {
 	Size         int    `xml:"Size"`
 }
 
+func HttpGet(url string) (resp *http.Response, err error) {
+	// 创建一个自定义的HTTP客户端(30秒超时，忽略 TLS 证书我嗯题)
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // 忽略SSL证书验证
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second, // 设置建立连接的超时时间
+			KeepAlive: 30 * time.Second,
+		}).DialContext,
+	}
+
+	client := &http.Client{
+		Transport: tr,
+		Timeout:   10 * time.Second, // 设置请求的总超时时间
+	}
+	// 使用自定义的客户端发起GET请求
+	response, err := client.Get(url)
+	if err != nil {
+		fmt.Println("Error fetching URL:", err)
+		return nil, err
+	} else {
+		return response, nil
+	}
+}
+
 func LoadRemoteHTTP(url string) (*ListBucketResult, error) {
 	// 获取远程 URL 的内容
-	response, err := http.Get(url)
+	response, err := HttpGet(url)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to fetch remote URL: %w", err)
 	}
