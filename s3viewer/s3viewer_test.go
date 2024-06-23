@@ -57,7 +57,7 @@ const invalidXML = `
 </ListBucketResult>`
 
 func TestFindS3XMLString(t *testing.T) {
-	xmlContent, err := findS3XMLString(sampleXML)
+	xmlContent, err := FindS3XMLString(sampleXML)
 	if err != nil {
 		t.Fatalf("Failed to find S3 XML string: %v", err)
 	}
@@ -74,7 +74,7 @@ func TestFindS3XMLString(t *testing.T) {
 }
 
 func TestSanitizeXMLContent(t *testing.T) {
-	xmlContent := sanitizeXMLContent([]byte(invalidXML))
+	xmlContent := SanitizeXMLContent([]byte(invalidXML))
 
 	var result ListBucketResult
 	err := xml.Unmarshal(xmlContent, &result)
@@ -88,9 +88,9 @@ func TestSanitizeXMLContent(t *testing.T) {
 }
 
 func TestParseXMLToListBucketResult(t *testing.T) {
-	xmlContent := sanitizeXMLContent([]byte(sampleXML))
+	xmlContent := SanitizeXMLContent([]byte(sampleXML))
 
-	result, err := parseXMLToListBucketResult(xmlContent)
+	result, err := ParseXMLToListBucketResult(xmlContent)
 	if err != nil {
 		t.Fatalf("Failed to parse XML to ListBucketResult: %v", err)
 	}
