@@ -1,0 +1,33 @@
+project_name: s3viewer
+
+builds:
+  - binary: s3v
+    main: ./cmd/main.go
+    goos:
+      - windows
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    goarm:
+      - 6
+      - 7
+    ignore:
+      - goos: windows
+        goarch: arm64
+      - goos: windows
+        goarch: arm
+
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^chore'
+      - '^tests'
