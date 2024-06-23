@@ -11,7 +11,8 @@ import (
 func main() {
 	// 定义命令行参数
 	url := flag.String("u", "http://", "s3 URL, such as http://bucket.s3.amazonaws.com/")
-	output := flag.String("o", "file_list.csv", "output file name")
+	output := flag.String("o", "", "output file name")
+	isUseFileOutput := *output != ""
 	flag.Parse()
 
 	// 检查是否提供了所有必需的参数
@@ -28,8 +29,18 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to load remote URL: %v", err)
 	}
-	if err := s3viewer.ResultToCSVFile(result, *output); err != nil {
-		log.Fatalf("Failed to save result to CSV file: %v", err)
+
+	if isUseFileOutput {
+		// 保存结果到文件
+		if err := s3viewer.SaveResultToCSVFile(result, *output); err != nil {
+			log.Fatalf("Failed to save result to CSV file: %v", err)
+		}
+		log.Printf("Saved into %v", *output)
+	} else {
+		// 打印结果到终端
+		if err := s3viewer.PrintResult(result); err != nil {
+			log.Fatalf("Failed to print result: %v", err)
+		}
 	}
-	log.Printf("Saved into %v", *output)
+
 }

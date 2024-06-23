@@ -154,7 +154,7 @@ func SaveResultToTempCSV(t *testing.T, result *ListBucketResult) (string, error)
 	t.Log(tmpFile)
 
 	// 将结果保存到 CSV 文件中
-	err := ResultToCSVFile(result, tmpFile)
+	err := SaveResultToCSVFile(result, tmpFile)
 	if err != nil {
 		return "", fmt.Errorf("failed to save result to CSV file: %w", err)
 	}

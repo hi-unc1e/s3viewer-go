@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"text/tabwriter"
 )
 
 // 定义结构体以匹配 XML 内容
@@ -94,8 +95,34 @@ func LoadFile(path string) (*ListBucketResult, error) {
 	return result, nil
 }
 
-// ResultToCSVFile 将 ListBucketResult 对象转换为 CSV 格式，并保存到指定的文件中
-func ResultToCSVFile(result *ListBucketResult, filePath string) error {
+func PrintResult(result *ListBucketResult) error {
+	// 如果 filePath 不为空，则将输出写入文件
+	var output *os.File
+
+	// 输出到标准输出
+	output = os.Stdout
+
+	// 创建一个新的 tabwriter
+	writer := tabwriter.NewWriter(output, 0, 0, 2, ' ', 0)
+
+	// 打印表头
+	fmt.Fprintln(writer, "Key\tSize\tLastModifiedDate")
+
+	// 遍历文件并打印每一行的内容
+	for _, file := range result.Files {
+		// Todo: fileSize 可以统一换算成合适的单位
+		// Todo: Date 可以排个倒序，最新的在最前面
+		fmt.Fprintf(writer, "%s\t%s\t%s\n", file.Key, fmt.Sprint(file.Size), file.LastModified)
+	}
+
+	// 刷新和清理 tabwriter
+	writer.Flush()
+
+	return nil
+}
+
+// 将 ListBucketResult 对象转换为 CSV 格式，并保存到指定的文件中
+func SaveResultToCSVFile(result *ListBucketResult, filePath string) error {
 	// 创建输出文件
 	file, err := os.Create(filePath)
 	if err != nil {
