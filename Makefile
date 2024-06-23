@@ -4,7 +4,7 @@
 EXECUTABLE := ./s3v
 
 # 设置Go源码文件所在目录
-SRC := cmd/cli.go
+SRC := cmd/main.go
 
 # 设置编译时的ldflagscd
 LDFLAGS := -w -s
