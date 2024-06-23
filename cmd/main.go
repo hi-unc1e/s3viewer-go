@@ -29,8 +29,11 @@ func main() {
 	}
 
 	// 从远程 URL 加载内容
-	var result *s3viewer.ListBucketResult
+	var result = new(s3viewer.ListBucketResult)
 	var err error = nil
+
+	// 初始化 URL
+	result.Url = *url
 
 	if isRecursively {
 		result, err = s3viewer.LoadRemoteHTTPRecursive(*url, *maxPage)
