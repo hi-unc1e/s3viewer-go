@@ -47,7 +47,14 @@ Usage of ./s3viewer:
     TODO
     ```
 - [ ] 自动翻页
+- [ ] 自动拼接链接～
+- [ ] 支持预览？（架构得考虑考虑）
 
+```html
+fofa dork: https://fofa.info/result?qbase64=IjxMaXN0QnVja2V0UmVzdWx0IHhtbG5zPVwiaHR0cDovL3MzLmFtYXpvbmF3cy5jb20vZG9jLzIwMDYtMDMtMDEvXCI%2BIiAmJiBjb3VudHJ5PSJDTiIgJiYgaWNvbl9oYXNoPSIyMTAwMDcyMDYyIg%3D%3D
+
+
+```
 
 ## Changelog
 | Date       | Desc                                 |
@@ -58,7 +65,6 @@ Usage of ./s3viewer:
 
 
 
-## ToDo
 
     
 ## sample S3 HTML format
