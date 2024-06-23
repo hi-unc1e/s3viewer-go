@@ -46,14 +46,14 @@ func HttpGet(url string) (resp *http.Response, err error) {
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // 忽略SSL证书验证
 		DialContext: (&net.Dialer{
-			Timeout:   10 * time.Second, // 设置建立连接的超时时间
-			KeepAlive: 10 * time.Second,
+			Timeout:   30 * time.Second, // 设置建立连接的超时时间
+			KeepAlive: 30 * time.Second,
 		}).DialContext,
 	}
 
 	client := &http.Client{
 		Transport: tr,
-		Timeout:   10 * time.Second, // 设置请求的总超时时间
+		Timeout:   45 * time.Second, // 设置请求的总超时时间
 	}
 	// 使用自定义的客户端发起GET请求
 	log.Printf("Http Get [%v]\n", url)

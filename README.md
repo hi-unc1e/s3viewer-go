@@ -31,8 +31,10 @@ $ s3viewer -h
 Usage of ./s3viewer:    
   -u string
       s3 URL, http://bucket.s3.amazonaws.com/ (default "http://")
+  -p int
+      max page (default 1)
   -o string
-      output file name (default "file_list.csv")
+      output file name
  
 ```
 ## ToDo
@@ -52,7 +54,14 @@ Usage of ./s3viewer:
   | package/android/pzjhcs/35a336f13be958cdc7fefa31a6e953d5.apk | 463869061 | 2024-04-08T06:16:28.000Z |
 
 
-- [ ] 自动翻页，查询文件总数
+- [x] 自动翻页，查询文件总数
+  ```bash
+  $ ./s3v -u https://s3_url/ -o mp.csv -p 2
+  ……
+  2024/06/23 17:01:45 [+]结果总条数: [1899], 已拉取页数: [2]
+  2024/06/23 17:01:45 Saved into mp.csv
+  ```
+
 - [ ] 下载链接，自动拼接链接～
 - [ ] 支持预览？（架构得考虑考虑，oneNote）
 
