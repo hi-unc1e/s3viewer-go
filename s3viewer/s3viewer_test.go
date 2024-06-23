@@ -2,7 +2,11 @@ package s3viewer
 
 import (
 	"encoding/xml"
+	"fmt"
+	"github.com/stretchr/testify/assert"
+	"log"
 	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -109,6 +113,61 @@ func TestParseXMLToListBucketResult(t *testing.T) {
 	}
 }
 
+func TestLoadFile_GoodXML(t *testing.T) {
+	if result, err := LoadFile("../test/h1.xml"); err != nil {
+		log.Fatalf("Failed to load file: %v", err)
+	} else {
+		content, err := SaveResultToTempCSV(t, result)
+		assert.NoError(t, err, "Failed to save result to temporary CSV")
+
+		// 断言文件内容不为空
+		assert.NotEmpty(t, content, "CSV content is empty")
+
+		// 断言 CSV 文件内容是否符合预期
+		expectedCSV := "Key"
+		assert.Contains(t, content, expectedCSV, "CSV content does not match expected")
+	}
+}
+
+func TestLoadFile_XmlInHtml(t *testing.T) {
+	if result, err := LoadFile("../test/h2-html.xml"); err != nil {
+		log.Fatalf("Failed to load file: %v", err)
+	} else {
+		content, err := SaveResultToTempCSV(t, result)
+		assert.NoError(t, err, "Failed to save result to temporary CSV")
+
+		// 断言文件内容不为空
+		assert.NotEmpty(t, content, "CSV content is empty")
+
+		// 断言 CSV 文件内容是否符合预期
+		expectedCSV := "Key"
+		assert.Contains(t, content, expectedCSV, "CSV content does not match expected")
+	}
+}
+
+// SaveResultToTempCSV 将给定的 ListBucketResult 保存到临时 CSV 文件中，并返回文件内容
+func SaveResultToTempCSV(t *testing.T, result *ListBucketResult) (string, error) {
+	t.Helper()
+
+	// 创建临时文件路径
+	tmpFile := filepath.Join(t.TempDir(), "test.csv")
+	t.Log(tmpFile)
+
+	// 将结果保存到 CSV 文件中
+	err := resultToCSVFile(result, tmpFile)
+	if err != nil {
+		return "", fmt.Errorf("failed to save result to CSV file: %w", err)
+	}
+
+	// 读取文件内容
+	text, err := os.ReadFile(tmpFile)
+	if err != nil {
+		return "", fmt.Errorf("failed to read temporary CSV file: %w", err)
+	}
+
+	return string(text), nil
+}
+
 func TestSaveToCsv(t *testing.T) {
 	xmlContent := SanitizeXMLContent([]byte(sampleXML))
 
@@ -116,10 +175,15 @@ func TestSaveToCsv(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to parse XML to ListBucketResult: %v", err)
 	}
-	tmp_file := "test.csv"
-	resultToCSVFile(result, tmp_file)
-	textB, err := os.ReadFile(tmp_file)
-	t.Log(string(textB))
+	content, err := SaveResultToTempCSV(t, result)
+	assert.NoError(t, err, "Failed to save result to temporary CSV")
+
+	// 断言文件内容不为空
+	assert.NotEmpty(t, content, "CSV content is empty")
+
+	// 断言 CSV 文件内容是否符合预期
+	expectedCSV := "Key"
+	assert.Contains(t, content, expectedCSV, "CSV content does not match expected")
 }
 
 func TestSaveToCsvSpecial(t *testing.T) {
@@ -129,8 +193,31 @@ func TestSaveToCsvSpecial(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to parse XML to ListBucketResult: %v", err)
 	}
-	tmp_file := "test.csv"
-	resultToCSVFile(result, tmp_file)
-	textB, err := os.ReadFile(tmp_file)
-	t.Log(string(textB))
+
+	content, err := SaveResultToTempCSV(t, result)
+	assert.NoError(t, err, "Failed to save result to temporary CSV")
+
+	// 断言文件内容不为空
+	assert.NotEmpty(t, content, "CSV content is empty")
+
+	// 断言 CSV 文件内容是否符合预期
+	expectedCSV := "Key"
+	assert.Contains(t, content, expectedCSV, "CSV content does not match expected")
+}
+
+func TestLoadRemoteHTTP(t *testing.T) {
+	result, err := LoadRemoteHTTP("https://dl.qianxin.com/")
+	if err != nil {
+		t.Fatalf("Failed to load remote HTTP: %v", err)
+	}
+
+	content, err := SaveResultToTempCSV(t, result)
+	assert.NoError(t, err, "Failed to save result to temporary CSV")
+
+	// 断言文件内容不为空
+	assert.NotEmpty(t, content, "CSV content is empty")
+
+	// 断言 CSV 文件内容是否符合预期
+	expectedCSV := "Key"
+	assert.Contains(t, content, expectedCSV, "CSV content does not match expected")
 }
