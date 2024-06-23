@@ -74,7 +74,7 @@ fofa dork: https://fofa.info/result?qbase64=IjxMaXN0QnVja2V0UmVzdWx0IHhtbG5zPVwi
 ## Changelog
 | Date       | Desc                                 |
 | ---------- |--------------------------------------|
-| 2024-06-23 | 发布`v0.0.1`，至少能用了。                    |
+| 2024-06-23 | 发布`v0.0.4`，支付保存为 csv文件，支持翻页。         |
 | 2024-06-20 | 项目需要：搞一个 s3 导出工具，支持导出 excel的那种（便于检索） |
 |            |                                      |
 
