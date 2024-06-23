@@ -1,12 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"flag"
-	"github.com/rendon/testcli"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -43,15 +45,39 @@ func TestMainFunc(t *testing.T) {
 	log.Println(string(text[:100]))
 }
 
-func TestMissingOutput(t *testing.T) {
-	// Using the struct version, if you want to test multiple commands
-	c := testcli.Command("go", "run", "main.go", "-u", "https://dl.qianxin.com/")
-	c.Run()
-	if !c.Success() {
-		t.Fatalf("Expected to succeed, but failed with error: %s", c.Error())
-	}
+func CaptureOutput(f func()) string {
+	//捕获标准输出
+	old := os.Stdout // keep backup of the real stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
 
-	if !c.StdoutContains("Key") {
-		t.Fatalf("Expected %q to contain %q", c.Stdout(), "Key")
+	outC := make(chan string)
+	// Copy the output in a separate goroutine so printing can't block indefinitely
+	go func() {
+		var buf bytes.Buffer
+		io.Copy(&buf, r)
+		outC <- buf.String()
+	}()
+
+	// Run the function
+	f()
+
+	// Back to normal state
+	w.Close()
+	os.Stdout = old // restoring the real stdout
+	return <-outC
+}
+
+func TestMissingOutput(t *testing.T) {
+	// 重置 flag
+	resetFlags()
+
+	output := CaptureOutput(func() {
+		os.Args = []string{"cmd", "-u", "https://dl.qianxin.com/"}
+		main()
+	})
+	expected := "Key"
+	if !strings.Contains(output, expected) {
+		t.Fatalf("Expected %q to contain %q", output, expected)
 	}
 }
