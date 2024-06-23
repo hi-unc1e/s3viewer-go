@@ -7,6 +7,7 @@
 [![Go](https://img.shields.io/badge/Go-%2300ADD8.svg?&logo=go&logoColor=white)](#)
 <a href="https://goreportcard.com/report/github.com/hi-unc1e/s3viewer-go"><img alt="Go Report Card" src="https://goreportcard.com/badge/github.com/hi-unc1e/s3viewer-go"/></a>
 <a href="https://github.com/hi-unc1e/s3viewer-go/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/hi-unc1e/s3viewer-go"/></a>
+[![Release](https://github.com/hi-unc1e/s3viewer-go/actions/workflows/releaser.yml/badge.svg)](https://github.com/hi-unc1e/s3viewer-go/actions/workflows/releaser.yml)
 
 <a href="https://github.com/hi-unc1e/s3viewer-go/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/hi-unc1e/s3viewer-go"/></a>
 <a href="https://github.com/hi-unc1e/s3viewer-go/releases"><img alt="GitHub releases" src="https://img.shields.io/github/release/hi-unc1e/s3viewer-go"/></a>
