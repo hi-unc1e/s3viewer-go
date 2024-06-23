@@ -64,7 +64,7 @@ func LoadRemoteHTTP(url string) (*ListBucketResult, error) {
 	return result, err
 }
 
-func LoadFile(path string) {
+func LoadFile(path string) (*ListBucketResult, error) {
 	// 读取 XML 文件内容
 	//fileText, err := ioutil.ReadFile("/Users/dpdu/Desktop/opt/s3view_dev/s3viewer-go/test/h2-html.xml")
 	fileText, err := ioutil.ReadFile(path)
@@ -91,6 +91,7 @@ func LoadFile(path string) {
 	for _, file := range result.Files {
 		fmt.Printf("%v\n", file)
 	}
+	return result, nil
 }
 
 // resultToCSVFile 将 ListBucketResult 对象转换为 CSV 格式，并保存到指定的文件中
