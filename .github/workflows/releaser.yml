@@ -2,6 +2,8 @@ name: Release
 
 on:
   push:
+    branches:
+      - main
     tags:
       # 当你给代码仓库加上以 v 开头的标签（例如：v1.0）并推送到 GitHub 时, 它就会自动触发构建
       - v*
