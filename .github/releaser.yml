@@ -1,0 +1,30 @@
+name: Release
+
+on:
+  push:
+    tags:
+      # 当你给代码仓库加上以 v 开头的标签（例如：v1.0）并推送到 GitHub 时, 它就会自动触发构建
+      - v*
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 // 官方要求
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod" // 使用 go.mod 文件中的 golang 版本
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v5
+        with:
+          distribution: goreleaser
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} // 使用 github-actions 发布
