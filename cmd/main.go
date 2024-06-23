@@ -12,8 +12,8 @@ func main() {
 	// 定义命令行参数
 	url := flag.String("u", "http://", "s3 URL, such as http://bucket.s3.amazonaws.com/")
 	output := flag.String("o", "", "output file name")
-	isUseFileOutput := *output != ""
 	flag.Parse()
+	isUseFileOutput := *output != ""
 
 	// 检查是否提供了所有必需的参数
 	if len(os.Args) < 2 {
