@@ -94,8 +94,8 @@ func LoadFile(path string) (*ListBucketResult, error) {
 	return result, nil
 }
 
-// resultToCSVFile 将 ListBucketResult 对象转换为 CSV 格式，并保存到指定的文件中
-func resultToCSVFile(result *ListBucketResult, filePath string) error {
+// ResultToCSVFile 将 ListBucketResult 对象转换为 CSV 格式，并保存到指定的文件中
+func ResultToCSVFile(result *ListBucketResult, filePath string) error {
 	// 创建输出文件
 	file, err := os.Create(filePath)
 	if err != nil {
