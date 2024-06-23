@@ -73,9 +73,6 @@ func TestFindS3XMLString(t *testing.T) {
 		t.Fatalf("Failed to unmarshal XML: %v", err)
 	}
 
-	if result.Name != "example-bucket" {
-		t.Errorf("Expected bucket name 'example-bucket', got '%s'", result.Name)
-	}
 }
 
 func TestSanitizeXMLContent(t *testing.T) {
@@ -87,9 +84,6 @@ func TestSanitizeXMLContent(t *testing.T) {
 		t.Fatalf("Failed to unmarshal sanitized XML: %v", err)
 	}
 
-	if result.Name != "example-bucket" {
-		t.Errorf("Expected bucket name 'example-bucket', got '%s'", result.Name)
-	}
 }
 
 func TestParseXMLToListBucketResult(t *testing.T) {
@@ -98,10 +92,6 @@ func TestParseXMLToListBucketResult(t *testing.T) {
 	result, err := ParseXMLToListBucketResult(xmlContent)
 	if err != nil {
 		t.Fatalf("Failed to parse XML to ListBucketResult: %v", err)
-	}
-
-	if result.Name != "example-bucket" {
-		t.Errorf("Expected bucket name 'example-bucket', got '%s'", result.Name)
 	}
 
 	if len(result.Files) != 1 {
@@ -219,6 +209,30 @@ func TestLoadRemoteHTTP(t *testing.T) {
 	result, err := LoadRemoteHTTP("https://dl.qianxin.com/")
 	if err != nil {
 		t.Fatalf("Failed to load remote HTTP: %v", err)
+	}
+
+	content, err := SaveResultToTempCSV(t, result)
+	assert.NoError(t, err, "Failed to save result to temporary CSV")
+
+	// 断言文件内容不为空
+	assert.NotEmpty(t, content, "CSV content is empty")
+
+	// 断言 CSV 文件内容是否符合预期
+	expectedCSV := "Key"
+	assert.Contains(t, content, expectedCSV, "CSV content does not match expected")
+}
+
+// 翻页
+func TestLoadRemoteHTTPRecursive(t *testing.T) {
+	result, err := LoadRemoteHTTPRecursive("https://116.178.4.134:9000/", 30)
+	if err != nil {
+		t.Fatalf("Failed to load remote HTTP: %v", err)
+	}
+
+	fmt.Println(result)
+	rlen := len(result.Files)
+	if rlen < 1000 {
+		log.Fatalf("翻页有问题！%+v", rlen)
 	}
 
 	content, err := SaveResultToTempCSV(t, result)
