@@ -259,7 +259,7 @@ func LoadRemoteHTTP(url string) (*ListBucketResult, error) {
 		return nil, fmt.Errorf("Failed to unmarshal XML: %w", err)
 	}
 
-	//newResult := result.MergeUrlAndFillLinks(result)
+	//result = result.MergeUrlAndFillLinks(result)
 	if err != nil {
 		log.Printf("Failed to fill link into results: %v", err)
 	}
