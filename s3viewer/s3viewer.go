@@ -6,6 +6,7 @@ import (
 	"encoding/csv"
 	"encoding/xml"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net"
@@ -39,6 +40,7 @@ type File struct {
 	Key          string `xml:"Key"`
 	LastModified string `xml:"LastModified"`
 	Size         int    `xml:"Size"`
+	Link         string
 }
 
 func HttpGet(url string) (resp *http.Response, err error) {
@@ -57,7 +59,29 @@ func HttpGet(url string) (resp *http.Response, err error) {
 	}
 	// 使用自定义的客户端发起GET请求
 	log.Printf("Http Get [%v]\n", url)
-	response, err := client.Get(url)
+	// 创建一个HTTP请求
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		fmt.Println("Error creating request:", err)
+		return nil, err
+	}
+
+	// 设置User-Agent和其他自定义请求头xw
+	headers := map[string]string{
+		"Accept":             "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+		"Accept-Encoding":    "identity",
+		"Accept-Language":    "zh-CN,zh;q=0.9,en;q=0.8",
+		"Sec-Ch-Ua":          "\"Not/A)Brand\";v=\"8\", \"Chromium\";v=\"126\", \"Microsoft Edge\";v=\"126\"",
+		"Sec-Ch-Ua-Mobile":   "?0",
+		"Sec-Ch-Ua-Platform": "\"macOS\"",
+		"Sec-Fetch-Dest":     "document",
+		"Sec-Fetch-Mode":     "navigate",
+		"User-Agent":         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0",
+	}
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+	response, err := client.Do(req)
 	if err != nil {
 		fmt.Println("Error fetching URL:", err)
 		return nil, err
@@ -160,7 +184,7 @@ func LoadRemoteHTTPRecursive(url string, maxPage int) (*ListBucketResult, error)
 			return nil, fmt.Errorf("Failed to fetch remote URL: %s", response.Status)
 		}
 
-		body, err := ioutil.ReadAll(response.Body)
+		body, err := io.ReadAll(response.Body)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to read response body: %w", err)
 		}
@@ -174,9 +198,13 @@ func LoadRemoteHTTPRecursive(url string, maxPage int) (*ListBucketResult, error)
 
 		result, err := ParseXMLToListBucketResult(xmlContent)
 		log.Printf("第 %v 页结果条数: %v", acutalPage, len(result.Files))
-
 		if err != nil {
-			return nil, fmt.Errorf("Failed to unmarshal XML: %w", err)
+			log.Printf("Failed to unmarshal XML: %v", err)
+		}
+
+		//result = result.MergeUrlAndFillLinks(result)
+		if err != nil {
+			log.Printf("Failed to fill link into results: %v", err)
 		}
 
 		allResults.Files = append(allResults.Files, result.Files...)
@@ -211,7 +239,7 @@ func LoadRemoteHTTP(url string) (*ListBucketResult, error) {
 	}
 
 	// 读取响应体
-	body, err := ioutil.ReadAll(response.Body)
+	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to read response body: %w", err)
 	}
@@ -229,6 +257,11 @@ func LoadRemoteHTTP(url string) (*ListBucketResult, error) {
 	result, err := ParseXMLToListBucketResult(xmlContent)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to unmarshal XML: %w", err)
+	}
+
+	//newResult := result.MergeUrlAndFillLinks(result)
+	if err != nil {
+		log.Printf("Failed to fill link into results: %v", err)
 	}
 	return result, err
 }
@@ -315,11 +348,10 @@ func SaveResultToCSVFile(result *ListBucketResult, filePath string) error {
 
 	// 写入文件条目
 	for _, entry := range result.Files {
-		currentFileLink, err := url.JoinPath(result.Url, entry.Key)
 		if err != nil {
 			return fmt.Errorf("Failed to join URL: %w", err)
 		}
-		record := []string{entry.Key, fmt.Sprintf("%d", entry.Size), entry.LastModified, currentFileLink}
+		record := []string{entry.Key, fmt.Sprintf("%d", entry.Size), entry.LastModified, entry.Link}
 		if err := writer.Write(record); err != nil {
 			return fmt.Errorf("Failed to write CSV record: %w", err)
 		}
@@ -330,11 +362,11 @@ func SaveResultToCSVFile(result *ListBucketResult, filePath string) error {
 
 // 查找并提取 <ListBucketResult> 标签及其内容
 func FindS3XMLString(xmlContent string) ([]byte, error) {
-	re := regexp.MustCompile(`(?s)<ListBucketResult.*?</ListBucketResult>`)
+	re := regexp.MustCompile(`(?s)<ListBucketResult[^>]*>(.*?)</ListBucketResult>`)
 	matches := re.FindAllString(xmlContent, -1)
 
 	if len(matches) == 0 {
-		return nil, fmt.Errorf("no matches found")
+		return nil, fmt.Errorf("no matches found %v", xmlContent)
 	}
 
 	return []byte(matches[0]), nil
@@ -356,13 +388,13 @@ func ParseXMLToListBucketResult(xmlContent []byte) (*ListBucketResult, error) {
 	var result ListBucketResult
 	err := xml.Unmarshal(xmlContent, &result)
 	if err != nil {
-		return nil, err
+		return &result, err
 	}
 	return &result, nil
 }
 
 // Merge 方法用于合并两个 ListBucketResult 结构体的结果
-func (rOld *ListBucketResult) MergeUrl(rNew *ListBucketResult) *ListBucketResult {
+func (rOld *ListBucketResult) MergeUrlAndFillLinks(rNew *ListBucketResult) *ListBucketResult {
 	newResult := new(ListBucketResult)
 	// 合并 url
 	if rOld.Url != "" {
@@ -372,6 +404,13 @@ func (rOld *ListBucketResult) MergeUrl(rNew *ListBucketResult) *ListBucketResult
 		newResult = rOld
 		newResult.Url = rNew.Url
 	}
-
+	for i := range newResult.Files {
+		currentFileLink, err := url.JoinPath(newResult.Url, newResult.Files[i].Key)
+		if err != nil {
+			log.Printf("Failed to join URL: %v, %v", newResult.Url, newResult.Files[i].Key)
+		}
+		newResult.Files[i].Link = currentFileLink
+	}
 	return newResult
+
 }
