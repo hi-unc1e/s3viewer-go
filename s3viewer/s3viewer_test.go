@@ -254,7 +254,6 @@ func TestLoadRemoteHTTPRecursive_v1(t *testing.T) {
 		t.Fatalf("Failed to load remote HTTP: %v", err)
 	}
 
-	fmt.Println(result)
 	rlen := len(result.Files)
 	if rlen < 1000 {
 		log.Fatalf("翻页有问题！%+v", rlen)
@@ -277,7 +276,6 @@ func TestLoadRemoteHTTPRecursive_v1_No_NextMarker(t *testing.T) {
 		t.Fatalf("Failed to load remote HTTP: %v", err)
 	}
 
-	fmt.Println(result)
 	rlen := len(result.Files)
 	if rlen < 1000 {
 		log.Fatalf("翻页有问题！%+v", rlen)
@@ -296,7 +294,6 @@ func TestLoadRemoteHTTPRecursive_v2(t *testing.T) {
 		t.Fatalf("Failed to load remote HTTP: %v", err)
 	}
 
-	fmt.Println(result)
 	rlen := len(result.Files)
 	if rlen < 1000 {
 		log.Fatalf("翻页有问题！%+v", rlen)
