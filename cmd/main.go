@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/hi-unc1e/s3viewer-go/s3viewer"
+	"github.com/hi-unc1e/s3viewer-go/web"
 	"log"
 	"os"
 )
@@ -13,6 +14,7 @@ func main() {
 	url := flag.String("u", "http://", "s3 URL, such as http://bucket.s3.amazonaws.com/")
 	output := flag.String("o", "", "output file name")
 	maxPage := flag.Int("p", 1, "max page")
+	webFlag := flag.Bool("web", false, "preview via local_web")
 	flag.Parse()
 	// 2nd param
 	isUseFileOutput := *output != ""
@@ -33,20 +35,19 @@ func main() {
 
 	// 初始化 URL
 	result.Url = *url
+	var err error
 
 	if isRecursively {
-		resultNew, err := s3viewer.LoadRemoteHTTPRecursive(*url, *maxPage)
+		result, err = s3viewer.LoadRemoteHTTPRecursive(*url, *maxPage)
 
 		if err != nil {
 			log.Fatalf("Failed to load remote URL: %v", err)
 		}
-		result = resultNew.MergeUrl(result)
 	} else {
-		resultNew, err := s3viewer.LoadRemoteHTTP(*url)
+		result, err = s3viewer.LoadRemoteHTTP(*url)
 		if err != nil {
 			log.Fatalf("Failed to load remote URL: %v", err)
 		}
-		result = resultNew.MergeUrl(result)
 	}
 
 	if isUseFileOutput {
@@ -60,5 +61,13 @@ func main() {
 		if err := s3viewer.PrintResult(result); err != nil {
 			log.Fatalf("Failed to print result: %v", err)
 		}
+	}
+
+	if *webFlag {
+		imageUrls := make([]string, 0)
+		for _, file := range result.Files {
+			imageUrls = append(imageUrls, file.Link)
+		}
+		web.ServeHttp(imageUrls)
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -60,6 +61,25 @@ const specialXML = `
         <StorageClass>STANDARD</StorageClass>
     </Contents>
 </ListBucketResult>`
+
+func TestHttpGet(t *testing.T) {
+	u := "https://dl.qianxin.com/"
+	response, err := HttpGet(u)
+	if err != nil {
+		t.Fatalf("Failed to make HTTP GET request: %v", err)
+	}
+
+	defer response.Body.Close()
+	// 读取响应体
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		t.Errorf("Failed to read response body: %v", err)
+	}
+	t.Log(response.StatusCode)
+
+	assert.NotEmpty(t, body)
+	assert.Equal(t, 200, response.StatusCode)
+}
 
 func TestFindS3XMLString(t *testing.T) {
 	xmlContent, err := FindS3XMLString(sampleXML)
