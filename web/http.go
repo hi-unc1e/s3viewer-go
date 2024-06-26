@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -100,6 +101,23 @@ func staticHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, filepath.Join(staticDir, filePath))
 }
 
+// 获取可用端口
+func GetAvailablePort() (int, error) {
+	address, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:0", "0.0.0.0"))
+	if err != nil {
+		return 0, err
+	}
+
+	listener, err := net.ListenTCP("tcp", address)
+	if err != nil {
+		return 0, err
+	}
+
+	defer listener.Close()
+	return listener.Addr().(*net.TCPAddr).Port, nil
+
+}
+
 func ServeHttp(imageURLs []string) {
 	// 生成HTML页面并保存在./static/index.html
 	if err := generateImagePage(imageURLs, "./static/index.html"); err != nil {
@@ -111,7 +129,11 @@ func ServeHttp(imageURLs []string) {
 	http.HandleFunc("/static/", staticHandler)
 
 	// 启动HTTP服务器
-	port := 30028
+	// 创建一个TCP Listener，自动选择端口号
+	port, err := GetAvailablePort() // :0 表示随机选择一个端口号
+	if err != nil {
+		log.Fatal("监听端口失败:", err)
+	}
 	fmt.Printf("服务器正在启动，访问 http://localhost:%v/static/index.html 查看图片展示页面\n", port)
 	if err := http.ListenAndServe(fmt.Sprintf("127.0.0.1:%v", port), nil); err != nil {
 		log.Fatal("服务器启动失败:", err)
