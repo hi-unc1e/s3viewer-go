@@ -202,7 +202,7 @@ func LoadRemoteHTTPRecursive(url string, maxPage int) (*ListBucketResult, error)
 			log.Printf("Failed to unmarshal XML: %v", err)
 		}
 
-		//result = result.MergeUrlAndFillLinks(result)
+		result, err = result.MergeUrlAndFillLinks(url)
 		if err != nil {
 			log.Printf("Failed to fill link into results: %v", err)
 		}
@@ -259,7 +259,7 @@ func LoadRemoteHTTP(url string) (*ListBucketResult, error) {
 		return nil, fmt.Errorf("Failed to unmarshal XML: %w", err)
 	}
 
-	//result = result.MergeUrlAndFillLinks(result)
+	result, err = result.MergeUrlAndFillLinks(url)
 	if err != nil {
 		log.Printf("Failed to fill link into results: %v", err)
 	}
@@ -393,24 +393,16 @@ func parseXMLToListBucketResult(xmlContent []byte) (*ListBucketResult, error) {
 	return &result, nil
 }
 
-// Merge 方法用于合并两个 ListBucketResult 结构体的结果
-func (rOld *ListBucketResult) MergeUrlAndFillLinks(rNew *ListBucketResult) *ListBucketResult {
-	newResult := new(ListBucketResult)
-	// 合并 url
-	if rOld.Url != "" {
-		newResult = rNew
-		newResult.Url = rOld.Url
-	} else if rNew.Url != "" {
-		newResult = rOld
-		newResult.Url = rNew.Url
-	}
-	for i := range newResult.Files {
-		currentFileLink, err := url.JoinPath(newResult.Url, newResult.Files[i].Key)
+func (result *ListBucketResult) MergeUrlAndFillLinks(u string) (*ListBucketResult, error) {
+	result.Url = u
+	var err error = nil
+	for i := range result.Files {
+		currentFileLink, err := url.JoinPath(result.Url, result.Files[i].Key)
 		if err != nil {
-			log.Printf("Failed to join URL: %v, %v", newResult.Url, newResult.Files[i].Key)
+			log.Printf("Failed to join URL: %v, %v", result.Url, result.Files[i].Key)
+			err = fmt.Errorf("Failed to join URL: %w", err)
 		}
-		newResult.Files[i].Link = currentFileLink
+		result.Files[i].Link = currentFileLink
 	}
-	return newResult
-
+	return result, err
 }
