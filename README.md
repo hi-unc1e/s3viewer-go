@@ -36,7 +36,8 @@ Usage of ./s3viewer:
       max page (default 1)
   -o string
       output file name
- 
+  -web
+        preview via local_web, such as http://127.0.0.1:30028/static/index.html
 ```
 ## ToDo
 - [x] 指定`-o`参数时，将会保存 csv 到本地
@@ -55,7 +56,7 @@ Usage of ./s3viewer:
   | package/android/pzjhcs/35a336f13be958cdc7fefa31a6e953d5.apk | 463869061 | 2024-04-08T06:16:28.000Z |
 
 
-- [x] 自动翻页，查询文件总数
+- [x] 自动翻页，统计文件总数
   ```bash
   $ ./s3v -u https://s3_url/ -o mp.csv -p 2
   ……
@@ -63,7 +64,9 @@ Usage of ./s3viewer:
   2024/06/23 17:01:45 Saved into mp.csv
   ```
 - [x] 下载链接，自动拼接链接～
-- [ ] 支持预览？（架构得考虑考虑，oneNote）
+- [x] 支持预览图片（浏览器支持啥，我就支持啥）
+- [ ] 支持预览表格（开发中）
+- [ ] 支持判断文件类型（在考虑要不要开发）
 
 ```html
 fofa dork: https://fofa.info/result?qbase64=IjxMaXN0QnVja2V0UmVzdWx0IHhtbG5zPVwiaHR0cDovL3MzLmFtYXpvbmF3cy5jb20vZG9jLzIwMDYtMDMtMDEvXCI%2BIiAmJiBjb3VudHJ5PSJDTiIgJiYgaWNvbl9oYXNoPSIyMTAwMDcyMDYyIg%3D%3D
