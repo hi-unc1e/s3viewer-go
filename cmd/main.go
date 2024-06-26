@@ -14,7 +14,7 @@ func main() {
 	url := flag.String("u", "http://", "s3 URL, such as http://bucket.s3.amazonaws.com/")
 	output := flag.String("o", "", "output file name")
 	maxPage := flag.Int("p", 1, "max page")
-	webFlag := flag.Bool("web", false, "preview via local_web")
+	webFlag := flag.Bool("web", false, "preview via local_web, such as http://127.0.0.1:30028/static/index.html")
 	flag.Parse()
 	// 2nd param
 	isUseFileOutput := *output != ""
