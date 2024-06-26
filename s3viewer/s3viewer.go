@@ -189,14 +189,14 @@ func LoadRemoteHTTPRecursive(url string, maxPage int) (*ListBucketResult, error)
 			return nil, fmt.Errorf("Failed to read response body: %w", err)
 		}
 
-		xmlContent, err := FindS3XMLString(string(body))
+		xmlContent, err := findS3XMLString(string(body))
 		if err != nil {
 			return nil, fmt.Errorf("Failed to find S3 XML string: %w", err)
 		}
 
-		xmlContent = SanitizeXMLContent(xmlContent)
+		xmlContent = sanitizeXMLContent(xmlContent)
 
-		result, err := ParseXMLToListBucketResult(xmlContent)
+		result, err := parseXMLToListBucketResult(xmlContent)
 		log.Printf("第 %v 页结果条数: %v", acutalPage, len(result.Files))
 		if err != nil {
 			log.Printf("Failed to unmarshal XML: %v", err)
@@ -246,15 +246,15 @@ func LoadRemoteHTTP(url string) (*ListBucketResult, error) {
 
 	// 提取 <ListBucketResult> 标签及其内容
 	// 假设 findS3XMLString 和 sanitizeXMLContent 函数已经更新为处理字符串输入
-	xmlContent, err := FindS3XMLString(string(body))
+	xmlContent, err := findS3XMLString(string(body))
 	if err != nil {
 		return nil, fmt.Errorf("Failed to find S3 XML string: %w", err)
 	}
 
-	xmlContent = SanitizeXMLContent(xmlContent)
+	xmlContent = sanitizeXMLContent(xmlContent)
 
 	// 解析 XML 内容为对象
-	result, err := ParseXMLToListBucketResult(xmlContent)
+	result, err := parseXMLToListBucketResult(xmlContent)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to unmarshal XML: %w", err)
 	}
@@ -275,16 +275,16 @@ func LoadFile(path string) (*ListBucketResult, error) {
 	}
 
 	// 提取 <ListBucketResult> 标签及其内容
-	xmlContent, err := FindS3XMLString(string(fileText))
+	xmlContent, err := findS3XMLString(string(fileText))
 	if err != nil {
 		log.Fatalf("Failed to find S3 XML string: %v", err)
 	}
 
 	// 预处理 XML 内容
-	xmlContent = SanitizeXMLContent(xmlContent)
+	xmlContent = sanitizeXMLContent(xmlContent)
 
 	// 解析 XML 内容为对象
-	result, err := ParseXMLToListBucketResult(xmlContent)
+	result, err := parseXMLToListBucketResult(xmlContent)
 	if err != nil {
 		log.Fatalf("Failed to unmarshal XML: %v", err)
 	}
@@ -361,7 +361,7 @@ func SaveResultToCSVFile(result *ListBucketResult, filePath string) error {
 }
 
 // 查找并提取 <ListBucketResult> 标签及其内容
-func FindS3XMLString(xmlContent string) ([]byte, error) {
+func findS3XMLString(xmlContent string) ([]byte, error) {
 	re := regexp.MustCompile(`(?s)<ListBucketResult[^>]*>(.*?)</ListBucketResult>`)
 	matches := re.FindAllString(xmlContent, -1)
 
@@ -373,7 +373,7 @@ func FindS3XMLString(xmlContent string) ([]byte, error) {
 }
 
 // 预处理 XML 内容，替换无效字符实体
-func SanitizeXMLContent(xmlContent []byte) []byte {
+func sanitizeXMLContent(xmlContent []byte) []byte {
 	re := regexp.MustCompile(`&[^;]+`)
 	return re.ReplaceAllFunc(xmlContent, func(b []byte) []byte {
 		if bytes.HasPrefix(b, []byte("&")) && !bytes.Contains(b, []byte(";")) {
@@ -384,7 +384,7 @@ func SanitizeXMLContent(xmlContent []byte) []byte {
 }
 
 // 解析 XML 内容为 ListBucketResult 结构体
-func ParseXMLToListBucketResult(xmlContent []byte) (*ListBucketResult, error) {
+func parseXMLToListBucketResult(xmlContent []byte) (*ListBucketResult, error) {
 	var result ListBucketResult
 	err := xml.Unmarshal(xmlContent, &result)
 	if err != nil {

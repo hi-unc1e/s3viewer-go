@@ -82,7 +82,7 @@ func TestHttpGet(t *testing.T) {
 }
 
 func TestFindS3XMLString(t *testing.T) {
-	xmlContent, err := FindS3XMLString(sampleXML)
+	xmlContent, err := findS3XMLString(sampleXML)
 	if err != nil {
 		t.Fatalf("Failed to find S3 XML string: %v", err)
 	}
@@ -96,7 +96,7 @@ func TestFindS3XMLString(t *testing.T) {
 }
 
 func TestSanitizeXMLContent(t *testing.T) {
-	xmlContent := SanitizeXMLContent([]byte(specialXML))
+	xmlContent := sanitizeXMLContent([]byte(specialXML))
 
 	var result ListBucketResult
 	err := xml.Unmarshal(xmlContent, &result)
@@ -107,9 +107,9 @@ func TestSanitizeXMLContent(t *testing.T) {
 }
 
 func TestParseXMLToListBucketResult(t *testing.T) {
-	xmlContent := SanitizeXMLContent([]byte(sampleXML))
+	xmlContent := sanitizeXMLContent([]byte(sampleXML))
 
-	result, err := ParseXMLToListBucketResult(xmlContent)
+	result, err := parseXMLToListBucketResult(xmlContent)
 	if err != nil {
 		t.Fatalf("Failed to parse XML to ListBucketResult: %v", err)
 	}
@@ -179,9 +179,9 @@ func SaveResultToTempCSV(t *testing.T, result *ListBucketResult) (string, error)
 }
 
 func TestSaveToCsv(t *testing.T) {
-	xmlContent := SanitizeXMLContent([]byte(sampleXML))
+	xmlContent := sanitizeXMLContent([]byte(sampleXML))
 
-	result, err := ParseXMLToListBucketResult(xmlContent)
+	result, err := parseXMLToListBucketResult(xmlContent)
 	if err != nil {
 		t.Fatalf("Failed to parse XML to ListBucketResult: %v", err)
 	}
@@ -197,9 +197,9 @@ func TestSaveToCsv(t *testing.T) {
 }
 
 func TestSaveToCsvSpecial(t *testing.T) {
-	xmlContent := SanitizeXMLContent([]byte(specialXML))
+	xmlContent := sanitizeXMLContent([]byte(specialXML))
 
-	result, err := ParseXMLToListBucketResult(xmlContent)
+	result, err := parseXMLToListBucketResult(xmlContent)
 	if err != nil {
 		t.Fatalf("Failed to parse XML to ListBucketResult: %v", err)
 	}
